@@ -1,4 +1,4 @@
-const { argon2d } = require("argon2");
+const argon2 = require("argon2");
 const express = require("express");
 const app = express();
 const mongoose = require("mongoose");
@@ -25,25 +25,99 @@ const start = async () => {
 };
 
 start();
-
+/*
 app.get("/:v/:test", (req, res) => {
     console.log(req.params.test);
     console.log(req.params.v);
     console.log(req.headers.test);
     return res.status(200).json({
         error: false,
-        message: "Hello world",
+        message: "Hello world"
     });
-});
+});   */
 
+// evaluation nom,prenom, email, mot de passe et confirmer mdp
+
+app.post("/register",async(req,res )=> {
+      const body = req.body;
+      if( body.nom.length <= 1){
+          return res.status(401).json({
+            error: true,
+            message: "Nom incorrecte"
+          })
+      }
+      if(body.prenom.length <= 1){
+        return res.status(401).json({
+          error: true,
+          message: "Preom incorrecte"
+        })
+      }
+      if(body.email.length <= 1){
+        return res.status(401).json({
+          error: true,
+          message: "email incorrecte"
+        })
+      }
+      
+        if(body.password !== body.password2){
+          return res.status(401).json({
+            error: true,
+            message: "pswd incorrecte"
+          })
+        }
+        if(body.password.length >= 16){
+          return res.status(401).json({
+            error: true,
+            message: "pswd incorrecte"
+          })
+      }
+      const hash = await argon2.hash(body.password);
+      
+
+      var passwordhash = hash
+      //test
+      return res.status(200).json({
+        error: false,
+        body,
+        hash
+      })
+
+      const user = new User({
+        nom : body.nom,
+        prenom : body.prenom,
+        email : body.email,
+        password : hash
+      })
+
+})
+
+app.post("/login",async(req,res )=> {
+
+})
+
+  // route à utiliser via un token bearer
+app.get("/user",async(req,res )=> {
+
+})
+
+app.get("/users",async(req,res )=> {
+
+})
+
+app.put("/user",async(req,res )=> {
+
+})
+
+app.delete("/user/:id",async(req,res )=> {
+
+})
+/*
 app.post("/user", async (req, res) => {
 console.table(req.body);
-const hash = await argon2.hash(req.body.mdp)
      const user = new User({
             nom: req.body.nom,
             email: req.body.email,
-            prenom: req.body.prenom,
-            mdp: hash
+            prenom: req.body.prenom
   });
   console.log(user);
 
@@ -53,4 +127,4 @@ const hash = await argon2.hash(req.body.mdp)
     error: false,
     message: "Hello world",
   });
-});
+});   */
