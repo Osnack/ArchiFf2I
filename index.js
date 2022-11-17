@@ -65,28 +65,28 @@ app.post("/register",async(req,res )=> {
             message: "pswd incorrecte"
           })
         }
-        if(body.password.length >= 16){
+        if(body.password.length <= 4){
           return res.status(401).json({
             error: true,
             message: "pswd incorrecte"
           })
       }
       const hash = await argon2.hash(body.password);
-      
-
-      var passwordhash = hash
-      //test
-      return res.status(200).json({
-        error: false,
-        body,
-        hash
-      })
+    
 
       const user = new User({
         nom : body.nom,
         prenom : body.prenom,
         email : body.email,
         password : hash
+      })
+
+      user.save()
+
+      return res.status(200).json({
+         error: false,
+         user,
+         hash
       })
 
 })

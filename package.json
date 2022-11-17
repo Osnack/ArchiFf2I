@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node index.js",
-    "startt": "pm2 kill && pm2 start index.js --watch && pm2 logs",
+    "startt": "node index.js",
+    "start": "pm2 kill && pm2 start index.js --watch && pm2 logs",
     "kill": "pm2 kill"
   },
   "author": "Othmane",
