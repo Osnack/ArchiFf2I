@@ -26,20 +26,10 @@ const start = async () => {
 };
 
 start();
-/*
-app.get("/:v/:test", (req, res) => {
-    console.log(req.params.test);
-    console.log(req.params.v);
-    console.log(req.headers.test);
-    return res.status(200).json({
-        error: false,
-        message: "Hello world"
-    });
-});   */
 
 // evaluation nom,prenom, email, mot de passe et confirmer mdp
 
-app.post("/register", async (req, res) => {
+app.post("/api/auth/register", async (req, res) => {
   const body = req.body;
   if (body.nom.length <= 1) {
     return res.status(401).json({
@@ -51,6 +41,12 @@ app.post("/register", async (req, res) => {
     return res.status(401).json({
       error: true,
       message: "Veuillez saisir votre prenom"
+    })
+  }
+  if (body.phone.length <= 1) {
+    return res.status(401).json({
+      error: true,
+      message: "Veuillez saisir votre numéro !"
     })
   }
   if (body.email.length <= 1) {
@@ -72,6 +68,7 @@ app.post("/register", async (req, res) => {
       message: "Votre mot de passe doit posseder plus de 4 caractères ! "
     })
   }
+  
   const hash = await argon2.hash(body.password);
 
 
@@ -79,30 +76,33 @@ app.post("/register", async (req, res) => {
     nom: body.nom,
     prenom: body.prenom,
     email: body.email,
+    phone: body.phone,
     password: hash
   })
 
   user.save()
 
   return res.status(200).json({
-    error: false,
-    user,
-    hash
+    user : {
+      nom : user.nom,
+      prenom : user.prenom,
+      phone : user.phone,
+      email : user.email
+   },
+    message : "Utilisateur créér avec succès !"
   })
 
 })
 
-app.post("/login", async (req, res) => {
+app.post("/api/auth/login", async (req, res) => {
     const body = req.body;
     if (body.email.length <= 1) {
       return res.status(401).json({
-        error: true,
         message: "Veuillez entrer votre E-mail !"
       })
     }
     if (body.password.length <= 4) {
       return res.status(401).json({
-        error: true,
         message: "Votre mot de passe doit posseder plus de 4 caractères !"
       })
     }
@@ -113,15 +113,13 @@ app.post("/login", async (req, res) => {
 
     if(!user){
       return res.status(401).json({
-          error : true,
           message : "Utilisateur Introuvable ! Créér votre compte d'abord !"
       })
     }
     const password = await argon2.verify(user.password, body.password);
     if (!password){
         return res.status(401).json({
-          error : true,
-          message : "mdp incorrecte :!"
+          message : "mot de passe incorrecte :!"
         })
     }
       //user.password = undefined;
@@ -138,11 +136,12 @@ app.post("/login", async (req, res) => {
 
     res.status(200).json({
       user : {
+         email : user.email,
          nom : user.nom,
          prenom : user.prenom,
-         email : user.email
+         phone : user.phone
       },
-      message : "Authentification réussie ! "
+      message : "Connexion réussie ! "
     })
     
 })
@@ -156,12 +155,87 @@ app.get("/api/user/profile",checkJwt,async(req,res)=>{
       user : {
          nom : user.nom,
          prenom : user.prenom,
+         phone : user.phone,
          email : user.email
       },
       message : "Profil Trouvé ! "
     })
  })
 
+
+app.put("/api/user/edit", checkJwt , async (req, res) => {
+
+  const user = await User.findOne({
+     email : res.locals.jwtPayload.email 
+  }) ;
+  user.prenom = req.body.prenom || user.prenom;
+  user.nom = req.body.nom || user.nom;
+  
+  await user.save();
+   
+  res.status(200).json({
+    user : {
+       email : user.email,
+       nom : user.nom,
+       prenom : user.prenom,
+       phone : user.phone
+    },
+    message : "Modification du compte réussie ! "
+  })
+   
+  })
+  app.put("/api/user/edit-password", checkJwt , async (req, res) => {
+    const user = await User.findOne({
+       email : res.locals.jwtPayload.email 
+    }) ;
+
+    if (req.body.password !== req.body.password2) {
+      return res.status(401).json({
+        error: true,
+        message: "Mot de passe non identique !"
+      })
+    }
+    
+    const hash = await argon2.hash(req.body.password);
+    user.password = hash;
+    await user.save();
+
+     
+    res.status(200).json({
+      message : "Mot de passe modifié ! "
+    })
+     
+    })
+  
+    app.put("/api/user/edit-phone", checkJwt , async (req, res) => {
+
+      const user = await User.findOne({
+         email : res.locals.jwtPayload.email 
+      }) ;
+      user.phone = req.body.phone || user.phone;
+      
+      await user.save();
+       
+      res.status(200).json({
+      
+        message : "Numéro de téléphone modifié ! "
+      })
+       
+      })
+    
+
+app.delete("/user/:id", async (req, res) => {
+  User.findByIdAndRemove(req.params.id)
+  .then(function (user) {
+      res.status(200).json(user);
+  })
+  .catch(function (error) {
+      res.status(500).json(error);
+  });
+})
+
+
+ /*
 app.get("/email/:email", async (req, res) => {
   var params = req.params;
 
@@ -169,7 +243,6 @@ app.get("/email/:email", async (req, res) => {
     email: params.email
   }).select('-__v')
 
-  //console.log(params)
   return res.status(200).json({
     error: false,
     users
@@ -183,7 +256,6 @@ app.get("/nom/:nom", async (req, res) => {
     nom: params.nom
 
   })
-  //console.log(params)
   return res.status(200).json({
     error: false,
     users
@@ -197,14 +269,12 @@ app.get("/prenom/:prenom", async (req, res) => {
     prenom: params.prenom
 
   })
-  //console.log(params)
   return res.status(200).json({
     error: false,
     users
   })
 })
 
-// route à utiliser via un token bearer
 app.get("/user", async (req, res) => {
   var params = req.params;
 
@@ -225,46 +295,4 @@ app.get("/users",  (req, res) => {
     });
   }) 
 })
-
-app.put("/user", async (req, res) => {
-  const password = await argon2.hash(req.body.password)
-
-    User.findByIdAndUpdate(req.params.id,{
-        prenom: req.body.prenom,
-        nom : req.body.nom,
-        email : req.body.email,
-        password : password
-    }).then(function(user){
-        res.status(200).json(user);
-    })
-    .catch(function (error) {
-      res.status(500).json(error);
-  });
-})
-
-app.delete("/user/:id", async (req, res) => {
-  User.findByIdAndRemove(req.params.id)
-  .then(function (user) {
-      res.status(200).json(user);
-  })
-  .catch(function (error) {
-      res.status(500).json(error);
-  });
-})
-/*
-app.post("/user", async (req, res) => {
-console.table(req.body);
-     const user = new User({
-            nom: req.body.nom,
-            email: req.body.email,
-            prenom: req.body.prenom
-  });
-  console.log(user);
-
-  await user.save();
-
-  return res.status(200).json({
-    error: false,
-    message: "Hello world",
-  });
-});   */
+*/
