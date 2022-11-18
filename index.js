@@ -27,7 +27,7 @@ const start = async () => {
 
 start();
 
-// evaluation nom,prenom, email, mot de passe et confirmer mdp
+  // Création de compte à l'aide de l'insertion des données (nom,prenom,email,phone et mdp)
 
 app.post("/api/auth/register", async (req, res) => {
   const body = req.body;
@@ -93,7 +93,7 @@ app.post("/api/auth/register", async (req, res) => {
   })
 
 })
-
+  // Authentification à l'aide du email + mdp et creation du Token
 app.post("/api/auth/login", async (req, res) => {
     const body = req.body;
     if (body.email.length <= 1) {
@@ -145,7 +145,7 @@ app.post("/api/auth/login", async (req, res) => {
     })
     
 })
-
+    // afficher le profil connecté à l'aide du TOKEN
 app.get("/api/user/profile",checkJwt,async(req,res)=>{
      const user = await User.findOne({
         email : res.locals.jwtPayload.email,
@@ -169,7 +169,8 @@ app.get("/api/user/profile",checkJwt,async(req,res)=>{
     })
  })
 
-
+  // Modification des information nom,prenom 
+ // on récupere l'user connecté grace au jeton et on modifie le nom + prenom
 app.put("/api/user/edit", checkJwt , async (req, res) => {
 
   const user = await User.findOne({
@@ -191,6 +192,9 @@ app.put("/api/user/edit", checkJwt , async (req, res) => {
   })
    
   })
+  
+  // Modification du mot de passe
+ // on récupere l'user connecté grace au jeton et on modifie le mot de passe
   app.put("/api/user/edit-password", checkJwt , async (req, res) => {
     const user = await User.findOne({
        email : res.locals.jwtPayload.email 
@@ -214,6 +218,9 @@ app.put("/api/user/edit", checkJwt , async (req, res) => {
      
     })
   
+    
+  // Modification des information phone
+ // on récupere l'user connecté grace au jeton et on modifie le numero de tel
     app.put("/api/user/edit-phone", checkJwt , async (req, res) => {
 
       const user = await User.findOne({
@@ -229,6 +236,9 @@ app.put("/api/user/edit", checkJwt , async (req, res) => {
       })
        
       })
+      
+  // Modification des information mail
+ // on récupere l'user connecté grace au jeton et en modifiant le mail
     
       app.put("/api/user/edit-email", checkJwt , async (req, res) => {
         if( req.body.email == ""){
@@ -251,6 +261,8 @@ app.put("/api/user/edit", checkJwt , async (req, res) => {
         })
  
            
+  //Suppresion de user
+ // on récupere l'user connecté grace au jeton et on modifie le supprime
 app.delete("/api/user/delete",checkJwt, async (req, res) => {
   await User.findOneAndRemove (res.locals.jwtPayload.email)
   .then(function (user) {
@@ -263,65 +275,3 @@ app.delete("/api/user/delete",checkJwt, async (req, res) => {
   });
 })
 
-
- /*
-app.get("/email/:email", async (req, res) => {
-  var params = req.params;
-
-  const users = await User.find({
-    email: params.email
-  }).select('-__v')
-
-  return res.status(200).json({
-    error: false,
-    users
-  })
-})
-
-app.get("/nom/:nom", async (req, res) => {
-  var params = req.params;
-
-  const users = await User.find({
-    nom: params.nom
-
-  })
-  return res.status(200).json({
-    error: false,
-    users
-  })
-})
-
-app.get("/prenom/:prenom", async (req, res) => {
-  var params = req.params;
-
-  const users = await User.find({
-    prenom: params.prenom
-
-  })
-  return res.status(200).json({
-    error: false,
-    users
-  })
-})
-
-app.get("/user", async (req, res) => {
-  var params = req.params;
-
-  const user = await User.find({
-      email: params.email
-  })
-  return res.status(200).json({
-    error: false,
-  })
-})
-
-app.get("/users",  (req, res) => {
-  User.find().then(function (users) {
-    res.status(200).json(users);
-  }).catch(function (error){
-    res.status(500).json({
-      error : error
-    });
-  }) 
-})
-*/
