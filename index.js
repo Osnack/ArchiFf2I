@@ -82,7 +82,7 @@ app.post("/api/auth/register", async (req, res) => {
 
   user.save()
 
-  return res.status(200).json({
+  return res.status(201).json({
     user : {
       nom : user.nom,
       prenom : user.prenom,
@@ -148,9 +148,16 @@ app.post("/api/auth/login", async (req, res) => {
 
 app.get("/api/user/profile",checkJwt,async(req,res)=>{
      const user = await User.findOne({
-        email : res.locals.jwtPayload.email
+        email : res.locals.jwtPayload.email,
     }) 
+    // au cas ou on a supprimé le mail
 
+    if(email == ""){
+  
+      return res.status(500).json({
+        message : "Veuillez  vous connectez d'abord ! "
+      })
+    }
     res.status(200).json({
       user : {
          nom : user.nom,
@@ -173,7 +180,7 @@ app.put("/api/user/edit", checkJwt , async (req, res) => {
   
   await user.save();
    
-  res.status(200).json({
+  res.status(201).json({
     user : {
        email : user.email,
        nom : user.nom,
@@ -201,7 +208,7 @@ app.put("/api/user/edit", checkJwt , async (req, res) => {
     await user.save();
 
      
-    res.status(200).json({
+    res.status(201).json({
       message : "Mot de passe modifié ! "
     })
      
@@ -216,18 +223,40 @@ app.put("/api/user/edit", checkJwt , async (req, res) => {
       
       await user.save();
        
-      res.status(200).json({
+      res.status(201).json({
       
         message : "Numéro de téléphone modifié ! "
       })
        
       })
     
-
-app.delete("/user/:id", async (req, res) => {
-  User.findByIdAndRemove(req.params.id)
+      app.put("/api/user/edit-email", checkJwt , async (req, res) => {
+        if( req.body.email == ""){
+            return res.status(500).json({
+               message : "Veuillez entrer votre email svp"
+            });
+        }
+        const user = await User.findOne({
+           email : res.locals.jwtPayload.email 
+        }) ;
+        user.email = req.body.email;
+        
+        await user.save();
+         
+        res.status(201).json({
+        
+          message : "Email modifié avec succès ! "
+        })
+         
+        })
+ 
+           
+app.delete("/api/user/delete",checkJwt, async (req, res) => {
+  await User.findOneAndRemove (res.locals.jwtPayload.email)
   .then(function (user) {
-      res.status(200).json(user);
+      res.status(200).json({
+        message : " Votre profil à été supprimé avec succès ! un Email de confirmation de suprresion vous a été envoyé "
+      });
   })
   .catch(function (error) {
       res.status(500).json(error);
